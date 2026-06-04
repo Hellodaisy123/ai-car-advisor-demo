@@ -1732,6 +1732,89 @@
 
     .voice-mark span:nth-child(3) { height: 34px; }
 
+    .image-load-frame {
+      --img-loading-height: 180px;
+      position: relative;
+      display: block;
+      width: 100%;
+      min-height: var(--img-loading-height);
+      overflow: hidden;
+      border-radius: inherit;
+      background: linear-gradient(110deg, #eef5ff 8%, #ffffff 18%, #e9f2ff 33%);
+      background-size: 220% 100%;
+      box-shadow: inherit;
+    }
+
+    .image-load-frame::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,.78) 48%, transparent 100%);
+      transform: translateX(-100%);
+      animation: imageShimmer 1.35s ease-in-out infinite;
+    }
+
+    .image-load-frame::after {
+      content: "图片加载中";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      color: #5f75a3;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .image-load-frame img {
+      opacity: 0;
+      transition: opacity .28s ease;
+    }
+
+    .image-load-frame.is-loaded {
+      min-height: 0;
+      background: transparent;
+    }
+
+    .image-load-frame.is-loaded::before,
+    .image-load-frame.is-loaded::after {
+      opacity: 0;
+      animation: none;
+      pointer-events: none;
+    }
+
+    .image-load-frame.is-loaded img { opacity: 1; }
+
+    .image-load-frame.is-error::after { content: "加载失败"; }
+
+    .car-visual .image-load-frame {
+      --img-loading-height: 148px;
+      height: 100%;
+      border-radius: 0;
+    }
+
+    .dealer-photo .image-load-frame {
+      --img-loading-height: 64px;
+      height: 100%;
+      border-radius: 14px;
+    }
+
+    .detail-car-img-frame {
+      --img-loading-height: 132px;
+      border-radius: 18px;
+    }
+
+    .voucher-image-frame {
+      --img-loading-height: 560px;
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    @keyframes imageShimmer {
+      to { transform: translateX(100%); }
+    }
+
     @media (max-width: 390px) {
       .bubble { max-width: 282px; }
       .compare-row {
@@ -1762,6 +1845,7 @@
         width: 84px;
         height: 64px;
       }
+      .voucher-image-frame { --img-loading-height: 500px; }
       .dealer-main h3,
       .bid-main h3,
       .quote-main h3 {
@@ -2329,6 +2413,33 @@
     </form>
   </div>
   <script>
+    const setupImageLoading = () => {
+      document.querySelectorAll("img").forEach((img) => {
+        if (img.dataset.loaderReady) return;
+
+        const frame = document.createElement("span");
+        frame.className = "image-load-frame";
+        img.classList.forEach((className) => frame.classList.add(`${className}-frame`));
+        img.dataset.loaderReady = "true";
+        img.decoding = "async";
+
+        img.parentNode.insertBefore(frame, img);
+        frame.appendChild(img);
+
+        const markLoaded = () => frame.classList.add("is-loaded");
+        const markError = () => frame.classList.add("is-error");
+
+        if (img.complete && img.naturalWidth > 0) {
+          markLoaded();
+        } else {
+          img.addEventListener("load", markLoaded, { once: true });
+          img.addEventListener("error", markError, { once: true });
+        }
+      });
+    };
+
+    setupImageLoading();
+
     const trigger = document.querySelector(".car-trigger");
     const detailThread = document.querySelector("#detail-thread");
     const inventoryTrigger = document.querySelector(".inventory-trigger");
